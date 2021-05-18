@@ -3,6 +3,7 @@ import {string, number} from "./mark.js";
 export const offset = typeof window !== "undefined" && window.devicePixelRatio > 1 ? 0 : 0.5;
 
 export function Style(mark, {
+  colorFilter,
   fill,
   fillOpacity,
   stroke,
@@ -14,6 +15,7 @@ export function Style(mark, {
   strokeDasharray,
   mixBlendMode
 } = {}) {
+  mark.colorFilter = string(colorFilter);
   mark.fill = impliedString(fill, "currentColor");
   mark.fillOpacity = impliedNumber(fillOpacity, 1);
   mark.stroke = impliedString(stroke, "none");
@@ -27,6 +29,7 @@ export function Style(mark, {
 }
 
 export function applyIndirectStyles(selection, mark) {
+  applyAttr(selection, "filter", mark.colorFilter);
   applyAttr(selection, "fill", mark.fill);
   applyAttr(selection, "fill-opacity", mark.fillOpacity);
   applyAttr(selection, "stroke", mark.stroke);
