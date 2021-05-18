@@ -19,7 +19,8 @@ export default async function() {
         x: culmen_depth_mm,
         y: culmen_length_mm,
         r: 2,
-        fill: "#ddd"
+        fill: "currentColor",
+        colorFilter: "invert(0.75) brightness(1.1)"
       }),
       Plot.dot(data, {
         x: culmen_depth_mm,

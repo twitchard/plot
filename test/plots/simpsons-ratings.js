@@ -27,6 +27,7 @@ export default async function() {
         x: "number_in_season",
         y: "season",
         text: d => d.imdb_rating == null ? null : d.imdb_rating.toFixed(1),
+        fill: "black",
         title: "title"
       })
     ]

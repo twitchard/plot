@@ -35,7 +35,7 @@ ${[["Trump", d.results_trumpd], ["Biden", d.results_bidenj]]
   .sort(([, a], [, b]) => d3.descending(a, b))
   .map(([name, count]) => `${count.toLocaleString("en")} votes for ${name}`)
   .join("\n")}`,
-          stroke: "currentColor",
+          stroke: "black",
           strokeWidth: 0.5
         }
       )

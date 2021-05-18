@@ -20,7 +20,7 @@ export default async function() {
       marginLeft: 300
     },
     marks: [
-      Plot.areaY(data, {x: "date", y: "unemployment", fill: "#eee"}),
+      Plot.areaY(data, {x: "date", y: "unemployment", fill: "currentColor", colorFilter: "invert(72%) brightness(130%)"}),
       Plot.line(data, {x: "date", y: "unemployment"}),
       Plot.ruleY([0])
     ]

@@ -8,6 +8,7 @@ export default async function() {
       grid: true
     },
     marks: [
+      Plot.rectY(athletes, Plot.binX({y2: "count"}, {x: "weight", fill: "white", z: "sex", thresholds: 30})),
       Plot.rectY(athletes, Plot.binX({y2: "count"}, {x: "weight", fill: "sex", mixBlendMode: "multiply", thresholds: 30})),
       Plot.ruleY([0])
     ]
