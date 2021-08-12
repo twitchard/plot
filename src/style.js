@@ -15,7 +15,7 @@ export function Style(mark, {
   strokeDasharray,
   mixBlendMode
 } = {}) {
-  mark.colorFilter = string(colorFilter);
+  mark.colorFilter = impliedString(colorFilter, "none");
   mark.fill = impliedString(fill, "currentColor");
   mark.fillOpacity = impliedNumber(fillOpacity, 1);
   mark.stroke = impliedString(stroke, "none");
