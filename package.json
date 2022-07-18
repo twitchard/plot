@@ -8,6 +8,7 @@
   },
   "license": "ISC",
   "type": "module",
+  "types": "types/index.d.ts",
   "main": "dist/index.js",
   "module": "dist/index.js",
   "jsdelivr": "dist/plot.umd.min.js",
