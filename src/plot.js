@@ -13,6 +13,9 @@ import {basic, initializer} from "./transforms/basic.js";
 import {maybeInterval} from "./transforms/interval.js";
 import {consumeWarnings} from "./warnings.js";
 
+/**
+ * See the [README](https://github.com/observablehq/plot/blob/v0.5.2/README.md) for more info.
+ */
 export function plot(options = {}) {
   const {facet, style, caption, ariaLabel, ariaDescription} = options;
 

@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "declaration": true,
     "target": "esnext",
     "module": "esnext",
     "lib": [
@@ -8,7 +9,7 @@
     ],
     "strict": true,
     "stripInternal": true,
-    "outDir": "dist",
+    "outDir": "types",
     "allowJs": true,
     "resolveJsonModule": true,
     "moduleResolution": "node",
