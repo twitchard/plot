@@ -1,17 +1,13 @@
+import {parse as isoParse} from "isoformat";
+import { color, descending, quantile } from "d3";
+
 type Digit = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
-
 type PXX = `p${Digit}${Digit}`;
-
 type DataSource = Iterable<unknown> | ArrayLike<unknown>;
-
 type DataSourceOptional = DataSource | null | undefined;
-
 type UnknownFn = (d: unknown) => unknown;
-
 type UserOption = unknown;
-
 type Field = string | UnknownFn;
-
 type ConstantOrFieldOption = number | Field | undefined;
 
 interface UserOptionsDefined {
@@ -28,38 +24,38 @@ interface UserOptionsDefined {
   transform?: ConstantOrFieldOption;
 }
 
-type UserOptionsKey = "x" | "x1" | "x2" | "y" | "y1" | "y2" | "z" | "fill" | "stroke";
-
+// `string & {}` is a TypeScript hack that allows TypeScript to provide completions
+// for the specifict strings in the union type while still allowing arbitrary strings.
+// without it, editors won't give completions for "x", "x1", etc.
+// eslint-disable-next-line @typescript-eslint/ban-types
+type UserOptionsKey = "x" | "x1" | "x2" | "y" | "y1" | "y2" | "z" | "fill" | "stroke" | string & {};
 type UserOptions = UserOptionsDefined | undefined;
-
 type ObjectDatum = Record<string, unknown>;
-
 type ArrayType = ArrayConstructor | Float32ArrayConstructor | Float64ArrayConstructor;
-
-type IAccessor = (d: any, i: number, data?: ArrayLike<any>) => any;
-
+type Accessor = (d: ObjectDatum, i: number, data?: ArrayLike<unknown>) => unknown;
 type booleanish = boolean | undefined;
 
-interface ITransform {
+interface Transform {
   transform: (data: DataSource) => DataSource;
 }
-
-
-import {parse as isoParse} from "isoformat";
-import {color, descending, quantile} from "d3";
 
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypedArray
 const TypedArray = Object.getPrototypeOf(Uint8Array);
 const objectToString = Object.prototype.toString;
 
+type Value = string | Accessor | number | Date | Transform | undefined;
+
+function isTransform(value: any): value is Transform {
+  return typeof value?.transform === "function";
+}
+
 // This allows transforms to behave equivalently to channels.
-export function valueof(data: DataSource, value: string | IAccessor | number | Date | ITransform, arrayType?: ArrayType) {
-  const type = typeof value;
-  return type === "string" ? map(data, field(value as string), arrayType)
-  : type === "function" ? map(data, value as IAccessor, arrayType)
-  : type === "number" || value instanceof Date || type === "boolean" ? map(data, constant(value), arrayType)
-    : value && typeof (value as ITransform).transform === "function" ? arrayify((value as ITransform).transform(data), arrayType)
-    : arrayify(value as DataSource, arrayType); // preserve undefined type
+export function valueof(data: DataSource, value: Value, arrayType?: ArrayType) {
+  return typeof value === "string" ? map(data, field(value), arrayType)
+    : typeof value === "function" ? map(data, value, arrayType)
+    : typeof value === "number" || value instanceof Date || typeof value === "boolean" ? map(data, constant(value), arrayType)
+    : isTransform(value) ? arrayify(value.transform(data), arrayType)
+    : arrayify(value, arrayType); // preserve undefined type
 }
 
 export const field = (name: string) => (d: ObjectDatum) => d[name];
@@ -127,8 +123,8 @@ export function arrayify(data: DataSourceOptional, type?: ArrayType) {
 
 // An optimization of type.from(values, f): if the given values are already an
 // instanceof the desired array type, the faster values.map method is used.
-export function map(values: DataSource, f: IAccessor, type: ArrayType = Array) {
-  return values instanceof type ? values.map(f) : (type as ArrayConstructor).from(values, f);
+export function map(values: DataSource, f: Accessor, type: ArrayType = Array) {
+  return values instanceof type ? values.map(f) : type.from(values, f);
 }
 
 // An optimization of type.from(values): if the given values are already an
@@ -142,7 +138,7 @@ export function isTypedArray(values: any) {
 }
 
 // Disambiguates an options object (e.g., {y: "x2"}) from a primitive value.
-export function isObject(option: any): boolean {
+export function isObject(option: UserOptions): option is UserOptionsDefined {
   return option?.toString === objectToString;
 }
 
@@ -151,8 +147,8 @@ export function isObject(option: any): boolean {
 // this is used to test whether a scale is defined; this should be consistent
 // with inferScaleType when there are no channels associated with the scale, and
 // if this returns true, then normalizeScale must return non-null.
-export function isScaleOptions(option: any): boolean {
-  return isObject(option) && (option.type !== undefined || option.domain !== undefined);
+export function isScaleOptions(option: UserOptions): boolean {
+  return isObject(option) && (("type" in option) || ("domain" in option));
 }
 
 // Disambiguates an options object (e.g., {y: "x2"}) from a channel value
@@ -201,7 +197,7 @@ export function range(data: ArrayLike<any>): Uint32Array {
 }
 
 // Returns a filtered range of data given the test function.
-export function where(data: ArrayLike<any>, test: IAccessor) {
+export function where(data: ArrayLike<any>, test: Accessor) {
   return range(data).filter(i => test(data[i], i, data));
 }
 
