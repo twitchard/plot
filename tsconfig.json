@@ -6,7 +6,7 @@
     "strict": true,
     "stripInternal": true,
     "declaration": true,
-    "declarationDir": "types",
+    "declarationDir": "src/t",
     "outDir": "dist",
     "allowJs": true,
     "resolveJsonModule": true,
