@@ -1,16 +1,12 @@
 import {parse as isoParse} from "isoformat";
 import {
-  isColor,
-  isEvery,
   isOrdinal,
-  isFirst,
   isTemporal,
   isTemporalString,
   isNumericString,
   isScaleOptions,
   isTypedArray,
   map,
-  order,
   slice
 } from "./options.js";
 import {registry, color, position, radius, opacity, symbol, length} from "./scales/index.js";
@@ -35,12 +31,13 @@ import {
 import {isDivergingScheme} from "./scales/schemes.js";
 import {ScaleTime, ScaleUtc} from "./scales/temporal.js";
 import {ScaleOrdinal, ScalePoint, ScaleBand, ordinalImplicit} from "./scales/ordinal.js";
-import {isSymbol, maybeSymbol} from "./symbols.js";
+import {maybeSymbol} from "./symbols.js";
 import {warn} from "./warnings.js";
 
 export function Scales(
   channelsByScale,
   {
+    label: globalLabel,
     inset: globalInset = 0,
     insetTop: globalInsetTop = globalInset,
     insetRight: globalInsetRight = globalInset,
@@ -53,6 +50,7 @@ export function Scales(
     align,
     padding,
     projection,
+    facet: {label: facetLabel = globalLabel} = {},
     ...options
   } = {}
 ) {
@@ -72,6 +70,7 @@ export function Scales(
     if (scale) {
       // populate generic scale options (percent, transform, insets)
       let {
+        label = key === "fx" || key === "fy" ? facetLabel : globalLabel,
         percent,
         transform,
         inset,
@@ -83,6 +82,7 @@ export function Scales(
       if (transform == null) transform = undefined;
       else if (typeof transform !== "function") throw new Error("invalid scale transform; not a function");
       scale.percent = !!percent;
+      scale.label = label === undefined ? inferScaleLabel(channels, scale) : label;
       scale.transform = transform;
       if (key === "x" || key === "fx") {
         scale.insetLeft = +insetLeft;
@@ -98,15 +98,88 @@ export function Scales(
 }
 
 export function ScaleFunctions(scales) {
-  return Object.fromEntries(Object.entries(scales).map(([name, {scale}]) => [name, scale]));
+  return Object.fromEntries(
+    Object.entries(scales)
+      .filter(([, {scale}]) => scale) // drop identity scales
+      .map(([name, {scale, type, interval, label}]) => {
+        scale.type = type; // for axis
+        if (interval != null) scale.interval = interval; // for axis
+        if (label != null) scale.label = label; // for axis
+        return [name, scale];
+      })
+  );
 }
 
 // Mutates scale.range!
-export function autoScaleRange({x, y, fx, fy}, dimensions) {
-  if (fx) autoScaleRangeX(fx, dimensions);
-  if (fy) autoScaleRangeY(fy, dimensions);
-  if (x) autoScaleRangeX(x, fx ? {width: fx.scale.bandwidth()} : dimensions);
-  if (y) autoScaleRangeY(y, fy ? {height: fy.scale.bandwidth()} : dimensions);
+export function autoScaleRange(scales, dimensions) {
+  const {x, y, fx, fy} = scales;
+  const superdimensions = fx || fy ? outerDimensions(dimensions) : dimensions;
+  if (fx) autoScaleRangeX(fx, superdimensions);
+  if (fy) autoScaleRangeY(fy, superdimensions);
+  const subdimensions = fx || fy ? innerDimensions(scales, dimensions) : dimensions;
+  if (x) autoScaleRangeX(x, subdimensions);
+  if (y) autoScaleRangeY(y, subdimensions);
+}
+
+// Channels can have labels; if all the channels for a given scale are
+// consistently labeled (i.e., have the same value if not undefined), and the
+// corresponding scale doesn’t already have an explicit label, then the
+// channels’ label is promoted to the scale. This inferred label should have an
+// orientation-appropriate arrow added when used as an axis, but we don’t want
+// to add the arrow when the label is set explicitly as an option; so, the
+// inferred label is distinguished as an object with an “inferred” property.
+function inferScaleLabel(channels = [], scale) {
+  let label;
+  for (const {label: l} of channels) {
+    if (l === undefined) continue;
+    if (label === undefined) label = l;
+    else if (label !== l) return;
+  }
+  if (label === undefined) return;
+  // Ignore the implicit label for temporal scales if it’s simply “date”.
+  if (isTemporalScale(scale) && /^(date|time|year)$/i.test(label)) return;
+  if (!isOrdinalScale(scale) && scale.percent) label = `${label} (%)`;
+  return {inferred: true, toString: () => label};
+}
+
+// Returns the dimensions of the outer frame; this is subdivided into facets
+// with the margins of each facet collapsing into the outer margins.
+export function outerDimensions(dimensions) {
+  const {
+    marginTop,
+    marginRight,
+    marginBottom,
+    marginLeft,
+    width,
+    height,
+    facet: {
+      marginTop: facetMarginTop,
+      marginRight: facetMarginRight,
+      marginBottom: facetMarginBottom,
+      marginLeft: facetMarginLeft
+    }
+  } = dimensions;
+  return {
+    marginTop: Math.max(marginTop, facetMarginTop),
+    marginRight: Math.max(marginRight, facetMarginRight),
+    marginBottom: Math.max(marginBottom, facetMarginBottom),
+    marginLeft: Math.max(marginLeft, facetMarginLeft),
+    width,
+    height
+  };
+}
+
+// Returns the dimensions of each facet.
+export function innerDimensions({fx, fy}, dimensions) {
+  const {marginTop, marginRight, marginBottom, marginLeft, width, height} = outerDimensions(dimensions);
+  return {
+    marginTop,
+    marginRight,
+    marginBottom,
+    marginLeft,
+    width: fx ? fx.scale.bandwidth() + marginLeft + marginRight : width,
+    height: fy ? fy.scale.bandwidth() + marginTop + marginBottom : height
+  };
 }
 
 function autoScaleRangeX(scale, dimensions) {
@@ -330,20 +403,8 @@ function inferScaleType(key, channels, {type, domain, range, scheme, pivot, proj
   // If there’s no data (and no type) associated with this scale, don’t create a scale.
   if (domain === undefined && !channels.some(({value}) => value !== undefined)) return;
 
-  const kind = registry.get(key);
-
-  // For color scales, if no range or scheme is specified and all associated
-  // defined values (from the domain if present, and otherwise from channels)
-  // are valid colors, then default to the identity scale. This allows, for
-  // example, a fill channel to return literal colors; without this, the colors
-  // would be remapped to a categorical scheme!
-  if (kind === color && range === undefined && scheme === undefined && isAll(domain, channels, isColor))
-    return "identity";
-
-  // Similarly for symbols…
-  if (kind === symbol && range === undefined && isAll(domain, channels, isSymbol)) return "identity";
-
   // Some scales have default types.
+  const kind = registry.get(key);
   if (kind === radius) return "sqrt";
   if (kind === opacity || kind === length) return "linear";
   if (kind === symbol) return "ordinal";
@@ -385,13 +446,6 @@ function asOrdinalType(kind) {
   }
 }
 
-function isAll(domain, channels, is) {
-  return domain !== undefined
-    ? isFirst(domain, is) && isEvery(domain, is)
-    : channels.some(({value}) => value !== undefined && isFirst(value, is)) &&
-        channels.every(({value}) => value === undefined || isEvery(value, is));
-}
-
 export function isTemporalScale({type}) {
   return type === "time" || type === "utc";
 }
@@ -410,11 +464,6 @@ function isBandScale({type}) {
 
 export function isDivergingScale({type}) {
   return /^diverging($|-)/.test(type);
-}
-
-// If the domain is undefined, we assume an identity scale.
-export function scaleOrder({range, domain = range}) {
-  return Math.sign(order(domain)) * Math.sign(order(range));
 }
 
 // Certain marks have special behavior if a scale is collapsed, i.e. if the
@@ -502,7 +551,9 @@ export function exposeScales(scaleDescriptors) {
   };
 }
 
-function exposeScale({scale, type, domain, range, label, interpolate, interval, transform, percent, pivot}) {
+// Note: axis- and legend-related properties (such as label, ticks and
+// tickFormat) are not included here as they do not affect the scale’s behavior.
+function exposeScale({scale, type, domain, range, interpolate, interval, transform, percent, pivot}) {
   if (type === "identity") return {type: "identity", apply: (d) => d, invert: (d) => d};
   const unknown = scale.unknown ? scale.unknown() : undefined;
   return {
@@ -511,7 +562,6 @@ function exposeScale({scale, type, domain, range, label, interpolate, interval, 
     ...(range !== undefined && {range: slice(range)}), // defensive copy
     ...(transform !== undefined && {transform}),
     ...(percent && {percent}), // only exposed if truthy
-    ...(label !== undefined && {label}),
     ...(unknown !== undefined && {unknown}),
     ...(interval !== undefined && {interval}),
 

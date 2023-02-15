@@ -2,7 +2,8 @@ import {blurImage, Delaunay, randomLcg, rgb} from "d3";
 import {valueObject} from "../channel.js";
 import {create} from "../context.js";
 import {map, first, second, third, isTuples, isNumeric, isTemporal, take, identity} from "../options.js";
-import {Mark} from "../plot.js";
+import {maybeColorChannel, maybeNumberChannel} from "../options.js";
+import {Mark} from "../mark.js";
 import {applyAttr, applyDirectStyles, applyIndirectStyles, applyTransform, impliedString} from "../style.js";
 import {initializer} from "../transforms/basic.js";
 
@@ -84,7 +85,12 @@ export class AbstractRaster extends Mark {
 export class Raster extends AbstractRaster {
   constructor(data, options = {}) {
     const {imageRendering} = options;
-    super(data, undefined, data == null ? sampler("fill", sampler("fillOpacity", options)) : options, defaults);
+    if (data == null) {
+      const {fill, fillOpacity} = options;
+      if (maybeNumberChannel(fillOpacity)[0] !== undefined) options = sampler("fillOpacity", options);
+      if (maybeColorChannel(fill)[0] !== undefined) options = sampler("fill", options);
+    }
+    super(data, undefined, options, defaults);
     this.imageRendering = impliedString(imageRendering, "auto");
   }
   // Ignore the color scale, so the fill channel is returned unscaled.
@@ -92,7 +98,7 @@ export class Raster extends AbstractRaster {
     return super.scale(channels, scales, context);
   }
   render(index, scales, channels, dimensions, context) {
-    const {color} = scales;
+    const color = scales.color ?? ((x) => x);
     const {x: X, y: Y} = channels;
     const {document} = context;
     const [x1, y1, x2, y2] = renderBounds(channels, dimensions, context);
@@ -180,6 +186,7 @@ export function maybeTuples(k, data, options) {
   return [data, {...rest, x, y, [k]: z}];
 }
 
+/** @jsdoc raster */
 export function raster() {
   const [data, options] = maybeTuples("fill", ...arguments);
   return new Raster(
@@ -217,7 +224,7 @@ export function rasterBounds({x1, y1, x2, y2}, scales, dimensions, context) {
 // generating a channel of the same name.
 export function sampler(name, options = {}) {
   const {[name]: value} = options;
-  if (typeof value !== "function") return options;
+  if (typeof value !== "function") throw new Error(`invalid ${name}: not a function`);
   return initializer({...options, [name]: undefined}, function (data, facets, channels, scales, dimensions, context) {
     const {x, y} = scales;
     // TODO Allow projections, if invertible.
@@ -265,6 +272,7 @@ function maybeInterpolate(interpolate) {
 // any blending or interpolation. Note: if multiple samples map to the same
 // pixel, the last one wins; this can introduce bias if the points are not in
 // random order, so use Plot.shuffle to randomize the input if needed.
+/** @jsdoc interpolateNone */
 export function interpolateNone(index, width, height, X, Y, V) {
   const W = new Array(width * height);
   for (const i of index) {
@@ -274,6 +282,7 @@ export function interpolateNone(index, width, height, X, Y, V) {
   return W;
 }
 
+/** @jsdoc interpolatorBarycentric */
 export function interpolatorBarycentric({random = randomLcg(42)} = {}) {
   return (index, width, height, X, Y, V) => {
     // Flatten the input coordinates to prepare to insert extrapolated points
@@ -339,6 +348,7 @@ export function interpolatorBarycentric({random = randomLcg(42)} = {}) {
   };
 }
 
+/** @jsdoc interpolateNearest */
 export function interpolateNearest(index, width, height, X, Y, V) {
   const W = new V.constructor(width * height);
   const delaunay = Delaunay.from(
@@ -360,6 +370,7 @@ export function interpolateNearest(index, width, height, X, Y, V) {
 }
 
 // https://observablehq.com/@observablehq/walk-on-spheres-precision
+/** @jsdoc interpolatorRandomWalk */
 export function interpolatorRandomWalk({random = randomLcg(42), minDistance = 0.5, maxSteps = 2} = {}) {
   return (index, width, height, X, Y, V) => {
     const W = new V.constructor(width * height);

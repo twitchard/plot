@@ -1,8 +1,8 @@
 import {pathRound as path, symbolCircle} from "d3";
 import {create} from "../context.js";
 import {negative, positive} from "../defined.js";
+import {Mark} from "../mark.js";
 import {identity, maybeFrameAnchor, maybeNumberChannel, maybeTuple} from "../options.js";
-import {Mark} from "../plot.js";
 import {
   applyChannelStyles,
   applyDirectStyles,
@@ -41,7 +41,7 @@ export class Dot extends Mark {
         y: {value: y, scale: "y", optional: true},
         r: {value: vr, scale: "r", filter: positive, optional: true},
         rotate: {value: vrotate, optional: true},
-        symbol: {value: vsymbol, scale: "symbol", optional: true}
+        symbol: {value: vsymbol, scale: "auto", optional: true}
       },
       withDefaultSort(options),
       defaults

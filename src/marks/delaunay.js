@@ -1,8 +1,8 @@
 import {group, pathRound as path, select, Delaunay} from "d3";
 import {create} from "../context.js";
 import {Curve} from "../curve.js";
+import {Mark} from "../mark.js";
 import {constant, maybeTuple, maybeZ} from "../options.js";
-import {Mark} from "../plot.js";
 import {
   applyChannelStyles,
   applyDirectStyles,
@@ -230,6 +230,7 @@ class Voronoi extends Mark {
     const [cx, cy] = applyFrameAnchor(this, dimensions);
     const xi = X ? (i) => X[i] : constant(cx);
     const yi = Y ? (i) => Y[i] : constant(cy);
+    const mark = this;
 
     function cells(index) {
       const delaunay = Delaunay.from(index, xi, yi);
@@ -239,9 +240,9 @@ class Voronoi extends Mark {
         .data(index)
         .enter()
         .append("path")
-        .call(applyDirectStyles, this)
+        .call(applyDirectStyles, mark)
         .attr("d", (_, i) => voronoi.renderCell(i))
-        .call(applyChannelStyles, this, channels);
+        .call(applyChannelStyles, mark, channels);
     }
 
     return create("svg:g", context)

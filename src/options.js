@@ -1,5 +1,6 @@
 import {parse as isoParse} from "isoformat";
 import {color, descending, range as rangei, quantile} from "d3";
+import {maybeTimeInterval, maybeUtcInterval} from "./time.js";
 
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypedArray
 const TypedArray = Object.getPrototypeOf(Uint8Array);
@@ -21,6 +22,7 @@ export function valueof(data, value, type) {
 
 export const field = (name) => (d) => d[name];
 export const indexOf = (d, i) => i;
+/** @jsdoc identity */
 export const identity = {transform: (d) => d};
 export const zero = () => 0;
 export const one = () => 1;
@@ -235,10 +237,10 @@ export function mid(x1, x2) {
   };
 }
 
-// TODO Allow the interval to be specified as a string, e.g. “day” or “hour”?
-// This will require the interval knowing the type of the associated scale to
-// chose between UTC and local time (or better, an explicit timeZone option).
-export function maybeInterval(interval) {
+// If interval is not nullish, converts interval shorthand such as a number (for
+// multiples) or a time interval name (such as “day”) to a {floor, offset,
+// range} object similar to a D3 time interval.
+export function maybeInterval(interval, type) {
   if (interval == null) return;
   if (typeof interval === "number") {
     const n = interval;
@@ -248,6 +250,7 @@ export function maybeInterval(interval) {
       range: (lo, hi) => rangei(Math.ceil(lo / n), hi / n).map((x) => n * x)
     };
   }
+  if (typeof interval === "string") return (type === "time" ? maybeTimeInterval : maybeUtcInterval)(interval);
   if (typeof interval.floor !== "function") throw new Error("invalid interval; missing floor method");
   if (typeof interval.offset !== "function") throw new Error("invalid interval; missing offset method");
   return interval;
@@ -333,23 +336,18 @@ export function isNumeric(values) {
   }
 }
 
-export function isFirst(values, is) {
-  for (const value of values) {
-    if (value == null) continue;
-    return is(value);
-  }
-}
-
-// Whereas isFirst only tests the first defined value and returns undefined for
-// an empty array, this tests all defined values and only returns true if all of
-// them are valid colors. It also returns true for an empty array, and thus
-// should generally be used in conjunction with isFirst.
+// Returns true if every non-null value in the specified iterable of values
+// passes the specified predicate, and there is at least one non-null value;
+// returns false if at least one non-null value does not pass the specified
+// predicate; otherwise returns undefined (as if all values are null).
 export function isEvery(values, is) {
+  let every;
   for (const value of values) {
     if (value == null) continue;
     if (!is(value)) return false;
+    every = true;
   }
-  return true;
+  return every;
 }
 
 // Mostly relies on d3-color, with a few extra color keywords. Currently this
@@ -398,7 +396,7 @@ export function maybeFrameAnchor(value = "middle") {
 // Like a sort comparator, returns a positive value if the given array of values
 // is in ascending order, a negative value if the values are in descending
 // order. Assumes monotonicity; only tests the first and last values.
-export function order(values) {
+export function orderof(values) {
   if (values == null) return;
   const first = values[0];
   const last = values[values.length - 1];
