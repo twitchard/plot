@@ -281,6 +281,7 @@ export * from "./aapl-close.js";
 export * from "./aapl-fancy-axis.js";
 export * from "./aspectRatio.js";
 export * from "./athletes-sample.js";
+export * from "./athletes-tooltip.js";
 export * from "./autoplot.js";
 export * from "./axis-labels.js";
 export * from "./bigint.js";

@@ -199,7 +199,12 @@ export function plot(options = {}) {
 
   // Compute value objects, applying scales and projection as needed.
   for (const [mark, state] of stateByMark) {
-    state.values = mark.scale(state.channels, scales, context);
+    let {channels} = state;
+    // TODO It’s probably slower than it needs to be to pass through the scaled
+    // facet channels here, since they are going to be the same within a facet?
+    const facetState = facetStateByMark.get(mark);
+    if (facetState !== undefined) channels = {...channels, ...facetState.channels};
+    state.values = mark.scale(channels, scales, context);
   }
 
   const {width, height} = dimensions;
@@ -233,6 +238,9 @@ export function plot(options = {}) {
     .call(applyInlineStyles, style)
     .node();
 
+  // TODO
+  context.ownerSVGElement = svg;
+
   // Render facets.
   if (facets !== undefined) {
     const facetDomains = {x: fx?.domain(), y: fy?.domain()};
@@ -258,8 +266,11 @@ export function plot(options = {}) {
           let index = null;
           if (indexes) {
             index = indexes[facetStateByMark.has(mark) ? f.i : 0];
+            const {fx, fy} = index;
             index = mark.filter(index, channels, values);
             if (index.length === 0) continue;
+            index.fx = fx; // TODO do we need to expose the facet values?
+            index.fy = fy; // TODO do we need to expose the facet values?
             index.fi = f.i; // TODO cleaner way of exposing the current facet index?
           }
           const node = mark.render(index, scales, values, subdimensions, context);
