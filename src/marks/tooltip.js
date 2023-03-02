@@ -44,15 +44,17 @@ export class Tooltip extends Mark {
           const [xp, yp] = pointer(event);
           let ri = maxRadius * maxRadius;
           for (const index of indexes) {
-            const oxj = fx(index.fx) - marginLeft;
-            const oyj = fy(index.fy) - marginTop;
+            const fxj = index.fx;
+            const fyj = index.fy;
+            const oxj = fx(fxj) - marginLeft;
+            const oyj = fy(fyj) - marginTop;
             for (const j of index) {
               const xj = X[j] + oxj;
               const yj = Y[j] + oyj;
               const dx = xj - xp;
               const dy = yj - yp;
               const rj = dx * dx + dy * dy;
-              if (rj <= ri) (i = j), (ri = rj), (xi = xj), (yi = yj), (fxi = index.fx), (fyi = index.fy);
+              if (rj <= ri) (i = j), (ri = rj), (xi = xj), (yi = yj), (fxi = fxj), (fyi = fyj);
             }
           }
         }
