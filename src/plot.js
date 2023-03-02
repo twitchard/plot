@@ -199,12 +199,7 @@ export function plot(options = {}) {
 
   // Compute value objects, applying scales and projection as needed.
   for (const [mark, state] of stateByMark) {
-    let {channels} = state;
-    // TODO It’s probably slower than it needs to be to pass through the scaled
-    // facet channels here, since they are going to be the same within a facet?
-    const facetState = facetStateByMark.get(mark);
-    if (facetState !== undefined) channels = {...channels, ...facetState.channels};
-    state.values = mark.scale(channels, scales, context);
+    state.values = mark.scale(state.channels, scales, context);
   }
 
   const {width, height} = dimensions;

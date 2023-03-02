@@ -17,7 +17,7 @@ export class Tooltip extends Mark {
     this.indexesBySvg = new WeakMap();
     this.maxRadius = +maxRadius;
   }
-  render(index, {x, y, fx, fy}, {x: X, y: Y, fx: FX, fy: FY, raw}, dimensions, context) {
+  render(index, {x, y, fx, fy}, {x: X, y: Y, raw}, dimensions, context) {
     // TODO
     // - ✅ Get local coordinates of the pointer
     // - ✅ Register one pointermove listener per plot
@@ -44,9 +44,11 @@ export class Tooltip extends Mark {
           const [xp, yp] = pointer(event);
           let ri = maxRadius * maxRadius;
           for (const index of indexes) {
+            const fxj = fx(index.fx);
+            const fyj = fy(index.fy);
             for (const j of index) {
-              const xj = FX[j] + X[j] - marginLeft;
-              const yj = FY[j] + Y[j] - marginTop;
+              const xj = fxj + X[j] - marginLeft;
+              const yj = fyj + Y[j] - marginTop;
               const dx = xj - xp;
               const dy = yj - yp;
               const rj = dx * dx + dy * dy;
