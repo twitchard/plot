@@ -17,7 +17,7 @@ export class Tooltip extends Mark {
     this.indexesBySvg = new WeakMap();
     this.maxRadius = +maxRadius;
   }
-  render(index, scales, {x: X, y: Y, fx: FX, fy: FY}, dimensions, context) {
+  render(index, {x, y, fx, fy}, {x: X, y: Y, fx: FX, fy: FY, raw}, dimensions, context) {
     // TODO
     // - ✅ Get local coordinates of the pointer
     // - ✅ Register one pointermove listener per plot
@@ -58,17 +58,25 @@ export class Tooltip extends Mark {
           dot.attr("display", "none");
         } else {
           dot.attr("display", "inline");
-          dot.attr("cx", xi);
-          dot.attr("cy", yi);
+          dot.attr("transform", `translate(${xi},${yi})`);
+          title.text(
+            [
+              `${x.label ?? "x"} = ${raw.x[i]}`,
+              `${y.label ?? "y"} = ${raw.y[i]}`,
+              `${fx.label ?? "fx"} = ${raw.fx[i]}`,
+              `${fy.label ?? "fy"} = ${raw.fy[i]}`
+            ].join("\n")
+          );
         }
       })
       .on("pointerdown pointerleave", () => dot.attr("display", "none"))
-      .append("circle")
+      .append("g")
       .attr("display", "none")
-      .attr("r", 4.5)
-      .attr("stroke", "red")
+      .attr("pointer-events", "all")
       .attr("fill", "none")
-      .attr("stroke-width", 1.5);
+      .call((g) => g.append("circle").attr("r", maxRadius).attr("fill", "none"))
+      .call((g) => g.append("circle").attr("r", 4.5).attr("stroke", "red").attr("stroke-width", 1.5));
+    const title = dot.append("title");
     return null;
   }
 }

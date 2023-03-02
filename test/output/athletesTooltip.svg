@@ -5204,7 +5204,7 @@
   </g>
   <g aria-label="facet" transform="translate(295,1)">
     <g aria-label="fy-axis tick label" text-anchor="start" transform="translate(9.5,0.5)">
-      <text y="0.32em" transform="translate(305,96)">195</text>
+      <text y="0.32em" transform="translate(305,96)">1950</text>
     </g>
     <g aria-label="fx-axis tick label" transform="translate(0.5,-8.5)">
       <text transform="translate(172.5,30)">male</text>
@@ -5230,7 +5230,7 @@
   </g>
   <g aria-label="facet" transform="translate(295,148)">
     <g aria-label="fy-axis tick label" text-anchor="start" transform="translate(9.5,0.5)">
-      <text y="0.32em" transform="translate(305,96)">196</text>
+      <text y="0.32em" transform="translate(305,96)">1960</text>
     </g>
     <g aria-label="y-grid" stroke="currentColor" stroke-opacity="0.1" transform="translate(0,0.5)">
       <line x1="40" x2="305" y1="136.92" y2="136.92"></line>
@@ -5300,7 +5300,7 @@
   </g>
   <g aria-label="facet" transform="translate(295,295)">
     <g aria-label="fy-axis tick label" text-anchor="start" transform="translate(9.5,0.5)">
-      <text y="0.32em" transform="translate(305,96)">197</text>
+      <text y="0.32em" transform="translate(305,96)">1970</text>
     </g>
     <g aria-label="y-grid" stroke="currentColor" stroke-opacity="0.1" transform="translate(0,0.5)">
       <line x1="40" x2="305" y1="136.92" y2="136.92"></line>
@@ -5569,7 +5569,7 @@
   </g>
   <g aria-label="facet" transform="translate(295,442)">
     <g aria-label="fy-axis tick label" text-anchor="start" transform="translate(9.5,0.5)">
-      <text y="0.32em" transform="translate(305,96)">198</text>
+      <text y="0.32em" transform="translate(305,96)">1980</text>
     </g>
     <g aria-label="y-grid" stroke="currentColor" stroke-opacity="0.1" transform="translate(0,0.5)">
       <line x1="40" x2="305" y1="136.92" y2="136.92"></line>
@@ -8238,7 +8238,7 @@
   </g>
   <g aria-label="facet" transform="translate(295,589)">
     <g aria-label="fy-axis tick label" text-anchor="start" transform="translate(9.5,0.5)">
-      <text y="0.32em" transform="translate(305,96)">199</text>
+      <text y="0.32em" transform="translate(305,96)">1990</text>
     </g>
     <g aria-label="y-grid" stroke="currentColor" stroke-opacity="0.1" transform="translate(0,0.5)">
       <line x1="40" x2="305" y1="136.92" y2="136.92"></line>
@@ -11160,7 +11160,7 @@
   </g>
   <g aria-label="facet" transform="translate(295,736)">
     <g aria-label="fy-axis tick label" text-anchor="start" transform="translate(9.5,0.5)">
-      <text y="0.32em" transform="translate(305,96)">200</text>
+      <text y="0.32em" transform="translate(305,96)">2000</text>
     </g>
     <g aria-label="y-grid" stroke="currentColor" stroke-opacity="0.1" transform="translate(0,0.5)">
       <line x1="40" x2="305" y1="136.92" y2="136.92"></line>
@@ -11191,7 +11191,10 @@
       <circle cx="80.03597122302159" cy="110.51999999999998" r="3"></circle>
     </g>
   </g>
-  <circle r="0" stroke="red" fill="none" stroke-width="1.5"></circle>
+  <g display="none" pointer-events="all" fill="none">
+    <circle r="40" fill="none"></circle>
+    <circle r="4.5" stroke="red" stroke-width="1.5"></circle><title></title>
+  </g>
   <g aria-label="fx-axis label" transform="translate(0.5,-27.5)">
     <text y="0.71em" transform="translate(320.5,31)">sex</text>
   </g>

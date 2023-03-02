@@ -21,13 +21,18 @@ export function Channels(channels, data) {
 }
 
 // TODO Use Float64Array for scales with numeric ranges, e.g. position?
+// TODO Cleaner way of exposing “raw” (unscaled) values?
 export function valueObject(channels, scales) {
-  return Object.fromEntries(
+  const raw = {};
+  const values = Object.fromEntries(
     Object.entries(channels).map(([name, {scale: scaleName, value}]) => {
       const scale = scaleName == null ? null : scales[scaleName];
+      raw[name] = value;
       return [name, scale == null ? value : map(value, scale)];
     })
   );
+  values.raw = raw;
+  return values;
 }
 
 // If the channel uses the "auto" scale (or equivalently true), infer the scale
