@@ -39,20 +39,20 @@ export class Tooltip extends Mark {
     this.indexesBySvg.set(svg, (indexes = [index]));
     const dot = select(svg)
       .on("pointermove", (event) => {
-        let i, xi, yi;
+        let i, xi, yi, fxi, fyi;
         if (event.buttons === 0) {
           const [xp, yp] = pointer(event);
           let ri = maxRadius * maxRadius;
           for (const index of indexes) {
-            const fxj = fx(index.fx);
-            const fyj = fy(index.fy);
+            const oxj = fx(index.fx) - marginLeft;
+            const oyj = fy(index.fy) - marginTop;
             for (const j of index) {
-              const xj = fxj + X[j] - marginLeft;
-              const yj = fyj + Y[j] - marginTop;
+              const xj = X[j] + oxj;
+              const yj = Y[j] + oyj;
               const dx = xj - xp;
               const dy = yj - yp;
               const rj = dx * dx + dy * dy;
-              if (rj <= ri) (i = j), (ri = rj), (xi = xj), (yi = yj);
+              if (rj <= ri) (i = j), (ri = rj), (xi = xj), (yi = yj), (fxi = index.fx), (fyi = index.fy);
             }
           }
         }
@@ -65,8 +65,8 @@ export class Tooltip extends Mark {
             [
               `${x.label ?? "x"} = ${raw.x[i]}`,
               `${y.label ?? "y"} = ${raw.y[i]}`,
-              `${fx.label ?? "fx"} = ${raw.fx[i]}`,
-              `${fy.label ?? "fy"} = ${raw.fy[i]}`
+              `${fx.label ?? "fx"} = ${fxi}`,
+              `${fy.label ?? "fy"} = ${fyi}`
             ].join("\n")
           );
         }
