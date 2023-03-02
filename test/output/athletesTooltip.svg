@@ -11195,6 +11195,9 @@
     <circle r="40" fill="none"></circle>
     <circle r="4.5" stroke="red" stroke-width="1.5"></circle><title></title>
   </g>
+  <g aria-label="fy-axis label" transform="translate(37.5,0.5)">
+    <text transform="translate(600,464.5) rotate(-90)">decade of birth</text>
+  </g>
   <g aria-label="fx-axis label" transform="translate(0.5,-27.5)">
     <text y="0.71em" transform="translate(320.5,31)">sex</text>
   </g>
