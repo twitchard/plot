@@ -261,12 +261,11 @@ export function plot(options = {}) {
           let index = null;
           if (indexes) {
             index = indexes[facetStateByMark.has(mark) ? f.i : 0];
-            const {fx, fy} = index;
             index = mark.filter(index, channels, values);
             if (index.length === 0) continue;
-            index.fx = fx; // TODO do we need to expose the facet values?
-            index.fy = fy; // TODO do we need to expose the facet values?
-            index.fi = f.i; // TODO cleaner way of exposing the current facet index?
+            index.fx = f.x;
+            index.fy = f.y;
+            index.fi = f.i;
           }
           const node = mark.render(index, scales, values, subdimensions, context);
           if (node == null) continue;
