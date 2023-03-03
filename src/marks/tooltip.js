@@ -1,6 +1,7 @@
 import {pointer, select} from "d3";
 import {Mark} from "../mark.js";
 import {maybeFrameAnchor, maybeTuple} from "../options.js";
+import {applyFrameAnchor} from "../style.js";
 
 export class Tooltip extends Mark {
   constructor(data, options = {}) {
@@ -17,7 +18,7 @@ export class Tooltip extends Mark {
     this.indexesBySvg = new WeakMap();
     this.maxRadius = +maxRadius;
   }
-  render(index, {x, y, fx, fy}, {x: X, y: Y, raw}, dimensions, context) {
+  render(index, {x, y, fx, fy}, {x: X, y: Y, raw: {x: RX, y: RY}}, dimensions, context) {
     // TODO
     // - ✅ Get local coordinates of the pointer
     // - ✅ Register one pointermove listener per plot
@@ -25,12 +26,13 @@ export class Tooltip extends Mark {
     // - ✅ Find the closest point across all facets
     // - ✅ Limit the search radius
     // - ✅ Suppress the tooltip on pointerdown
-    // - Handle multiple dots in the same position (e.g., click to cycle)?
-    // - Handle x or y not existing; respect frameAnchor
-    // - Handle fx or fy not existing (for the entire plot)
+    // - ✅ Display unscaled values in a tooltip
+    // - ✅ Handle x or y not existing; respect frameAnchor
+    // - ✅ Handle fx or fy not existing (for the entire plot)
     // - Handle faceting being disabled for this mark (facet: null)
-    // - Display the unscaled values in a tooltip
+    // - [nice to have] Handle multiple dots in the same position (e.g., click to cycle)?
     // - Remove the red dot for testing purposes
+    const [cx, cy] = applyFrameAnchor(this, dimensions);
     const {maxRadius} = this;
     const {marginLeft, marginTop} = dimensions;
     const svg = context.ownerSVGElement;
@@ -46,11 +48,11 @@ export class Tooltip extends Mark {
           for (const index of indexes) {
             const fxj = index.fx;
             const fyj = index.fy;
-            const oxj = fx(fxj) - marginLeft;
-            const oyj = fy(fyj) - marginTop;
+            const oxj = fx ? fx(fxj) - marginLeft : 0;
+            const oyj = fy ? fy(fyj) - marginTop : 0;
             for (const j of index) {
-              const xj = X[j] + oxj;
-              const yj = Y[j] + oyj;
+              const xj = (X ? X[j] : cx) + oxj;
+              const yj = (Y ? Y[j] : cy) + oyj;
               const dx = xj - xp;
               const dy = yj - yp;
               const rj = dx * dx + dy * dy;
@@ -63,14 +65,12 @@ export class Tooltip extends Mark {
         } else {
           dot.attr("display", "inline");
           dot.attr("transform", `translate(${xi},${yi})`);
-          title.text(
-            [
-              `${x.label ?? "x"} = ${raw.x[i]}`,
-              `${y.label ?? "y"} = ${raw.y[i]}`,
-              `${fx.label ?? "fx"} = ${fxi}`,
-              `${fy.label ?? "fy"} = ${fyi}`
-            ].join("\n")
-          );
+          const text = [];
+          if (x) text.push(`${x.label ?? "x"} = ${RX[i]}`);
+          if (y) text.push(`${y.label ?? "y"} = ${RY[i]}`);
+          if (fx) text.push(`${fx.label ?? "fx"} = ${fxi}`);
+          if (fy) text.push(`${fy.label ?? "fy"} = ${fyi}`);
+          title.text(text.join("\n"));
         }
       })
       .on("pointerdown pointerleave", () => dot.attr("display", "none"))
