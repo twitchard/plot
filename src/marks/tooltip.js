@@ -30,6 +30,14 @@ export class Tooltip extends Mark {
     // - ✅ Handle x or y not existing; respect frameAnchor
     // - ✅ Handle fx or fy not existing (for the entire plot)
     // - Handle faceting being disabled for this mark (facet: null)
+    // - Tooltips for rect, with configurable anchor point
+    // - Tooltips for line, searching first on x and then on y, and vice versa
+    // - Tooltips for area… matching between topline and baseline?
+    // - Tooltips for link and arrow, treating {x1, y1} and {x2, y2} as distinct points
+    // - Tooltips for vector, but matching the end of the vector instead of the start?
+    // - Tooltips for tick and rule?
+    // - Tooltips for bar and cell?
+    // - Tooltips for geo and contour?
     // - [nice to have] Handle multiple dots in the same position (e.g., click to cycle)?
     // - Remove the red dot for testing purposes
     const [cx, cy] = applyFrameAnchor(this, dimensions);
